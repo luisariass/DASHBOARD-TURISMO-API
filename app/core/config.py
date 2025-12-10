@@ -1,25 +1,28 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from typing import List
 
 class Settings(BaseSettings):
-    # Configuración del Modelo Pydantic
-    # Le decimos que ignore las variables extra que encuentre en el .env
+    """
+    Define la configuración de la aplicación.
+    Lee las variables desde un archivo .env y las valida.
+    """
     model_config = SettingsConfigDict(env_file='../.env', case_sensitive=True, extra='ignore')
 
-    # --- Variables de la API ---
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Dashboard Turismo API"
     
-    # --- MongoDB ---
-    # Nombres corregidos para coincidir con tu archivo .env
     MONGODB_URI: str
-    MONGODB_DATABASE_FOURSQUARE: str = "foursquare_scraping"
-    MONGODB_DATABASE_GOOGLE: str = "Googlemaps_Scraping"
+    MONGODB_DATABASE_FOURSQUARE: str
+    MONGODB_DATABASE_GOOGLE: str
     
-    # --- CORS ---
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    BACKEND_CORS_ORIGINS: List[str]
 
 
 @lru_cache
-def get_settings():
+def get_settings() -> Settings:
+    """
+    Crea y devuelve una instancia de la configuración.
+    Usa @lru_cache para que el archivo .env se lea solo una vez.
+    """
     return Settings()
