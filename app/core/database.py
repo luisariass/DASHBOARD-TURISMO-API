@@ -1,5 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorClient
-from config import get_settings
+from .config import get_settings
 import certifi
 
 settings = get_settings()
@@ -11,14 +11,12 @@ class Database:
 
     def connect(self):
         self.client = AsyncIOMotorClient(settings.MONGODB_URI, tlsCAFile=certifi.where())
-        self.db_foursquare = self.client[settings.DB_FOURSQUARE]
-        self.db_google = self.client[settings.DB_GOOGLE]
-        print("✅ Conectado a MongoDB")
+        self.db_foursquare = self.client[settings.MONGODB_DATABASE_FOURSQUARE]
+        self.db_google = self.client[settings.MONGODB_DATABASE_GOOGLE]
 
     def close(self):
         if self.client:
             self.client.close()
-            print("🛑 Desconectado de MongoDB")
 
 db = Database()
 

@@ -30,22 +30,53 @@ async def get_reviewers_by_department(
     limit: int,
     full: bool = False
 ) -> List[dict]:
-    collection = "reseñantes_full" if full else "reseñantes"
+    collection = "reviewers_full" if full else "reviewers"
     query = {"departamento": departamento}
     cursor = db[collection].find(query).limit(limit)
     return await _fetch_documents(cursor)
 
 async def count_reviewers(db: AsyncIOMotorDatabase, departamento: str, full: bool = False) -> int:
-    collection = "reseñantes_full" if full else "reseñantes"
+    collection = "reviewers_full" if full else "reviewers"
     return await db[collection].count_documents({"departamento": departamento})
 
-async def get_tips_by_department(db: AsyncIOMotorDatabase, departamento: str, limit: int) -> List[dict]:
-    query = {"departamento": departamento}
-    cursor = db["tips_expand"].find(query).limit(limit)
-    return await _fetch_documents(cursor)
+async def get_expanded_tips_by_department(db: AsyncIOMotorDatabase, departamento: str, limit: int) -> List[dict]:
+    """
+    Obtiene los tips expandidos usando un pipeline de agregación que coincide con la estructura original.
+    """
+    pipeline = [
+        {
+            "$match": {
+                "departamento": {"$regex": departamento, "$options": "i"}
+            }
+        },
+        {"$unwind": "$tips"},  # Explota el array
+        {
+            "$project": {
+                "_id": 0, # Excluimos el _id
+                "user_name": 1,
+                "municipio": 1,
+                "departamento": 1,
+                "tip": "$tips", # Proyectamos el objeto 'tips' completo como 'tip'
+            }
+        },
+        {"$limit": limit}
+    ]
 
-async def count_tips(db: AsyncIOMotorDatabase, departamento: str) -> int:
-    return await db["tips_expand"].count_documents({"departamento": departamento})
+    cursor = db["tips"].aggregate(pipeline)
+    return await cursor.to_list(length=None)
+
+async def count_expanded_tips(db: AsyncIOMotorDatabase, departamento: str) -> int:
+    """
+    Cuenta el número total de tips después de expandir el array.
+    """
+    pipeline = [
+        {"$match": {"departamento": {"$regex": departamento, "$options": "i"}}},
+        {"$unwind": "$tips"},
+        {"$count": "total_tips"}
+    ]
+    
+    result = await db["tips"].aggregate(pipeline).to_list(length=1)
+    return result[0]["total_tips"] if result else 0
 
 async def get_distinct_field(db: AsyncIOMotorDatabase, field: str) -> List[str]:
     """Obtiene valores únicos para un campo (categoría o municipio)."""
