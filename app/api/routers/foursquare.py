@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from app.core.database import get_db_foursquare
 from app.services import foursquare as service
-from app.models.schemas import SiteListResponse, ReviewerListResponse, TipListResponse, NameListResponse
+from app.models.schemas import SiteListResponse, ReviewerListResponse, TipListResponse, NameListResponse, HeatmapResponse
 
 router = APIRouter()
 
@@ -44,3 +44,11 @@ async def read_categories(db = Depends(get_db_foursquare)):
 async def read_municipalities(db = Depends(get_db_foursquare)):
     names = await service.get_distinct_field(db, "municipio")
     return {"total": len(names), "nombres": names}
+
+@router.get("/heatmap", response_model=HeatmapResponse)
+async def read_heatmap_points(
+    departamento: str = Query(..., min_length=2),
+    db = Depends(get_db_foursquare)
+):
+    points = await service.get_heatmap_points(db, departamento)
+    return {"total": len(points), "points": points}
