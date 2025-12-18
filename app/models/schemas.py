@@ -8,22 +8,26 @@ class SiteBase(BaseModel):
     municipio: Optional[str] = None
     departamento: Optional[str] = None
     categoria: Optional[str] = None
-    latitud: Optional[float] = None
-    longitud: Optional[float] = None
+class HeatmapPoint(BaseModel):
+    """Representa un único punto para el mapa de calor."""
+    lat: float
+    lng: float
+    # Opcional: un 'peso' para el punto, como el rating del sitio
+    weight: float = 1.0
 
 # --- Modelos Específicos ---
 class SiteFoursquare(SiteBase):
-    rating: Optional[float] = None
-    tips_count: Optional[int] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
+    rating: Optional[float] = None 
 
 class SiteGoogle(SiteBase):
     puntuacion: Optional[float] = None
-    num_resenas: Optional[int] = None
 
 class Reviewer(BaseModel):
     id: str = Field(..., alias="_id")
-    user_id: str = Field(..., alias="user_id")
-    user_name: Optional[str] = Field(..., alias="nombre_usuario")
+    user_id: Optional[str] = None
+    user_name: Optional[str] = None
     municipio: Optional[str] = None
     departamento: Optional[str] = None
 
@@ -60,6 +64,9 @@ class ReviewerListResponse(BaseModel):
 class TipListResponse(BaseModel):
     total_tips: int
     tips: List[ExpandedTip]
+class HeatmapResponse(BaseModel):
+    total: int
+    points: List[HeatmapPoint]
 
 class NameListResponse(BaseModel):
     total: int
