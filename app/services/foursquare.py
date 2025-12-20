@@ -101,19 +101,19 @@ async def get_heatmap_points(db: AsyncIOMotorDatabase, departamento: str) -> Lis
     # Usamos una proyección para traer solo los campos necesarios. ¡Muy eficiente!
     query = {
         "departamento": {"$regex": departamento, "$options": "i"},
-        "latitud": {"$exists": True, "$ne": None},
-        "longitud": {"$exists": True, "$ne": None}
+        "latitude": {"$exists": True, "$ne": None},
+        "longitude": {"$exists": True, "$ne": None}
     }
-    projection = {"latitud": 1, "longitud": 1, "rating": 1, "_id": 0}
+    projection = {"latitude": 1, "longitude": 1, "_id": 0}
     
     # Asegúrate de consultar la colección correcta (ej. sities_full o sities_clean si tiene los datos)
-    cursor = db["sities_full"].find(query, projection)
+    cursor = db["sities_clean"].find(query, projection)
     
     points = []
     async for doc in cursor:
         points.append({
-            "lat": doc["latitud"],
-            "lng": doc["longitud"],
-            "weight": doc.get("rating", 1.0) # Usamos el rating como peso, o 1.0 por defecto
+            "latitude": doc["latitude"],
+            "longitude": doc["longitude"],
+            #"weight": doc.get("rating", 1.0) # Usamos el rating como peso, o 1.0 por defecto
         })
     return points

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.config import get_settings
+from app.core.cache import init_redis, close_redis
 from app.core.database import db
 from app.api.routers import foursquare, google
 
@@ -11,8 +12,10 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     # Startup
     db.connect()
+    init_redis(settings.REDIS_URL)
     yield
     # Shutdown
+    close_redis()
     db.close()
 
 app = FastAPI(

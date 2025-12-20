@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     MONGODB_URI: str
     MONGODB_DATABASE_FOURSQUARE: str
     MONGODB_DATABASE_GOOGLE: str
-    
+    REDIS_URL: str
     BACKEND_CORS_ORIGINS: List[str]
 
 
