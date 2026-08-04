@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # Verifica que la app se importa y registra sus rutas. Las settings son
+      # obligatorias, así que se inyectan valores de relleno: no se conecta a
+      # Mongo ni a Redis en tiempo de import.
+      - name: Verificar que la app arranca
+        env:
+          MONGODB_URI: mongodb://localhost:27017
+          MONGODB_DATABASE_FOURSQUARE: test_fsq
+          MONGODB_DATABASE_GOOGLE: test_google
+          REDIS_URL: redis://localhost:6379
+          BACKEND_CORS_ORIGINS: '["http://localhost:5173"]'
+        run: python -c "from app.main import app; assert app.routes; print(len(app.routes), 'rutas')"
+
+      - name: Validar docker-compose
+        # env_file debe existir para que compose parsee; los valores son
+        # irrelevantes porque no se levanta ningún servicio.
+        run: |
+          cp .env.example .env
+          docker compose config --quiet

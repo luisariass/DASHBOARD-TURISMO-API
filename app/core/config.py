@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     Define la configuración de la aplicación.
     Lee las variables desde un archivo .env y las valida.
     """
-    model_config = SettingsConfigDict(env_file='../.env', case_sensitive=True, extra='ignore')
+    model_config = SettingsConfigDict(env_file='.env', case_sensitive=True, extra='ignore')
 
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Dashboard Turismo API"

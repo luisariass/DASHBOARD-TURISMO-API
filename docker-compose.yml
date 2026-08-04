@@ -1,0 +1,37 @@
+services:
+  api:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env
+    environment:
+      # Dentro de la red de Compose, Redis no está en localhost sino en el
+      # host 'redis'. Esto sobreescribe el REDIS_URL del .env, que apunta a
+      # localhost para cuando ejecutas uvicorn directamente en tu máquina.
+      REDIS_URL: redis://redis:6379
+    volumes:
+      # Live-reload no está activo (el CMD de producción no usa --reload),
+      # pero el montaje evita reconstruir la imagen en cada cambio.
+      - ./app:/app/app
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
+
+# El repo web se conecta a esta misma red para que su Nginx pueda hacer
+# proxy_pass a http://api:8000. Créala una sola vez con:
+#   docker network create dashboard_net
+networks:
+  default:
+    external: true
+    name: dashboard_net

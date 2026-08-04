@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Entorno: nunca commitear secretos, sí la plantilla
+.env
+.env.*
+.ENV
+.ENV.*
+!.env.example
+
+# Notebooks
+*.ipynb
