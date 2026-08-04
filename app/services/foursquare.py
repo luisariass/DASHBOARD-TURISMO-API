@@ -1,5 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from typing import List
+from typing import List, Optional
 from app.core.cache import cached  # <-- Importar el decorador
 
 async def _fetch_documents(cursor) -> List[dict]:
@@ -92,21 +92,40 @@ async def get_distinct_field(db: AsyncIOMotorDatabase, field: str) -> List[str]:
     cursor = db["sities_clean"].aggregate(pipeline)
     return [doc["_id"] async for doc in cursor]
 
-@cached(prefix="fsq_heatmap", ttl_seconds=900)  # 15 minutos (los datos geográficos cambian poco)
-async def get_heatmap_points(db: AsyncIOMotorDatabase, departamento: str) -> List[dict]:
+async def get_municipalities_by_department(db: AsyncIOMotorDatabase, departamento: str) -> List[str]:
+    """Obtiene la lista de municipios filtrada por departamento."""
+    pipeline = [
+        {"$match": {
+            "departamento": {"$regex": departamento, "$options": "i"},
+            "municipio": {"$ne": None}
+        }},
+        {"$group": {"_id": "$municipio"}},
+        {"$sort": {"_id": 1}}
+    ]
+    cursor = db["sities_clean"].aggregate(pipeline)
+    return [doc["_id"] async for doc in cursor]
+
+@cached(prefix="fsq_heatmap", ttl_seconds=900)  # 15 minutos
+async def get_heatmap_points(
+    db: AsyncIOMotorDatabase, 
+    departamento: str, 
+    municipio: Optional[str] = None
+) -> List[dict]:
     """
     Obtiene una lista de coordenadas y pesos para el mapa de calor.
-    Consulta la colección que contiene los datos de lat/lon.
+    Permite filtrar opcionalmente por municipio.
     """
-    # Usamos una proyección para traer solo los campos necesarios. ¡Muy eficiente!
     query = {
         "departamento": {"$regex": departamento, "$options": "i"},
         "latitude": {"$exists": True, "$ne": None},
         "longitude": {"$exists": True, "$ne": None}
     }
+    
+    if municipio:
+        query["municipio"] = {"$regex": municipio, "$options": "i"}
+
     projection = {"latitude": 1, "longitude": 1, "_id": 0}
     
-    # Asegúrate de consultar la colección correcta (ej. sities_full o sities_clean si tiene los datos)
     cursor = db["sities_clean"].find(query, projection)
     
     points = []
@@ -114,6 +133,5 @@ async def get_heatmap_points(db: AsyncIOMotorDatabase, departamento: str) -> Lis
         points.append({
             "latitude": doc["latitude"],
             "longitude": doc["longitude"],
-            #"weight": doc.get("rating", 1.0) # Usamos el rating como peso, o 1.0 por defecto
         })
     return points

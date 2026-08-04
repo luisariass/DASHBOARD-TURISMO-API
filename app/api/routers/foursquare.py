@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query
+from typing import Optional
 from app.core.database import get_db_foursquare
 from app.services import foursquare as service
 from app.models.schemas import SiteListResponse, ReviewerListResponse, TipListResponse, NameListResponse, HeatmapResponse
@@ -41,14 +42,21 @@ async def read_categories(db = Depends(get_db_foursquare)):
     return {"total": len(names), "nombres": names}
 
 @router.get("/municipios", response_model=NameListResponse)
-async def read_municipalities(db = Depends(get_db_foursquare)):
-    names = await service.get_distinct_field(db, "municipio")
+async def read_municipalities(
+    departamento: Optional[str] = Query(None, min_length=2),
+    db = Depends(get_db_foursquare)
+):
+    if departamento:
+        names = await service.get_municipalities_by_department(db, departamento)
+    else:
+        names = await service.get_distinct_field(db, "municipio")
     return {"total": len(names), "nombres": names}
 
 @router.get("/heatmap", response_model=HeatmapResponse)
 async def read_heatmap_points(
     departamento: str = Query(..., min_length=2),
+    municipio: Optional[str] = Query(None),
     db = Depends(get_db_foursquare)
 ):
-    points = await service.get_heatmap_points(db, departamento)
+    points = await service.get_heatmap_points(db, departamento, municipio)
     return {"total": len(points), "points": points}
