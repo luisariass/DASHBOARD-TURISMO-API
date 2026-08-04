@@ -1,0 +1,32 @@
+# Imagen de la API en NestJS. Convive con Dockerfile (FastAPI) mientras dure la
+# migración; cuando se corte, este archivo pasa a llamarse Dockerfile y el otro
+# se elimina.
+
+# --- Etapa de construcción ---
+FROM node:20-alpine AS build
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY tsconfig.json nest-cli.json ./
+COPY src ./src
+RUN npm run build
+
+# Se reinstalan solo las dependencias de producción para no arrastrar el
+# compilador de TypeScript ni el CLI de Nest a la imagen final.
+RUN npm ci --omit=dev
+
+# --- Etapa de producción ---
+FROM node:20-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY package.json ./
+
+# El puerto lo decide la variable PORT; 8001 por defecto para poder correr en
+# paralelo con FastAPI en el 8000.
+EXPOSE 8001
+CMD ["node", "dist/main"]

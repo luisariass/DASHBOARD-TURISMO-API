@@ -4,6 +4,11 @@ __pycache__/
 venv/
 .venv/
 
+# Node / NestJS
+node_modules/
+dist/
+*.tsbuildinfo
+
 # Entorno: nunca commitear secretos, sí la plantilla
 .env
 .env.*

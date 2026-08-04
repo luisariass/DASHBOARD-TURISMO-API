@@ -98,9 +98,56 @@ app/
 
 ## Migración a NestJS
 
-Planificada por endpoint, con FastAPI y Nest corriendo en paralelo (`:8000` y
-`:8001`) y comparando el JSON de ambos antes de cortar. Se usará el driver
-nativo `mongodb` en lugar de Mongoose: los datos son scrapeados y sin esquema
-fijo, todas las lecturas son agregaciones o `find` con projection, y no hay
-escrituras. Al comparar respuestas, hacerlo con Redis apagado por la deuda del
-caché descrita arriba.
+En curso en la rama `feat/nest`. Los 10 endpoints están implementados y
+verificados contra FastAPI: 46 respuestas idénticas y 9 distintas, y las 9 son el
+arreglo del bug de Google. El detalle está en
+[`docs/PARIDAD.md`](docs/PARIDAD.md).
+
+Las dos versiones conviven mientras dure la migración: FastAPI en el 8000 y Nest
+en el 8001.
+
+```bash
+npm install
+npm run start:dev                      # Nest en el 8001
+npm run build && npm run start:prod
+npm test                               # tests de la clave de caché
+npm run compare                        # compara las dos APIs endpoint por endpoint
+```
+
+Con Docker, el servicio `api-nest` del `docker-compose.yml` levanta esta versión
+en el 8001 en paralelo a `api`.
+
+Decisiones de arquitectura aplicadas:
+
+- **Driver nativo `mongodb`, no Mongoose.** Los datos son scrapeados y sin
+  esquema fijo, todas las lecturas son agregaciones o `find` con projection y no
+  hay escrituras; los schemas de Mongoose descartarían campos desconocidos.
+- **Módulos verticales por feature** (`foursquare/`, `google/`, `shared/`), con
+  una base de repositorio compartida que recibe las colecciones por
+  configuración. Añadir un proveedor es añadir una carpeta.
+- **Frontera de repositorio delgada:** los services reciben un repositorio con
+  métodos en términos del dominio, no un handle de `Db`. Es lo que hace que se
+  puedan probar sin levantar Mongo.
+- **Caché en la frontera HTTP**, con la clave derivada de la ruta y la query
+  completa. Corrige el bug descrito arriba.
+- **Sin lógica de dominio inventada:** no hay capa de entidades ni puertos y
+  adaptadores, porque no hay reglas de negocio que aislar.
+
+Estructura:
+
+```
+src/
+├─ main.ts                 # arranque, CORS, ValidationPipe, Swagger
+├─ app.module.ts
+├─ config/                 # settings validadas al arrancar
+├─ database/               # un MongoClient, dos providers de Db
+├─ cache/                  # Redis, interceptor y clave de caché
+├─ shared/                 # DTOs de query, mappers y base de repositorios
+├─ foursquare/             # controller, service, repository, DTOs
+└─ google/
+```
+
+El `openapi.json` queda en `/api/v1/openapi.json` y la documentación
+interactiva en `/docs`. Ese esquema es el que después consumirá
+`openapi-typescript` para generar los tipos del frontend, en vez de mantenerlos
+a mano.
