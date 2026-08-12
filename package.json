@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "description": "API de consulta del dashboard de turismo del Caribe colombiano",
   "private": true,
+  "packageManager": "pnpm@11.21.0",
   "scripts": {
     "build": "nest build",
     "start": "nest start",

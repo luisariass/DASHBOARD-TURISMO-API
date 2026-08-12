@@ -10,8 +10,15 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
-    "incremental": true,
+    "rootDir": "./src",
+    // Sin compilación incremental a propósito. El `deleteOutDir` de
+    // nest-cli.json borra dist/ en cada build, pero tsc decide qué emitir
+    // leyendo tsconfig.tsbuildinfo, no mirando dist/: con `incremental` activo,
+    // una segunda build sin cambios en src/ borraba dist/ y no volvía a
+    // emitirla, dejando el arranque en "Cannot find module dist/main". El mismo
+    // choque lo provocaba `pnpm lint`, que comparte ese fichero y lo escribe
+    // tras un --noEmit. El proyecto compila en unos segundos; no compensa.
+
     "skipLibCheck": true,
     "strict": true,
     "strictNullChecks": true,
