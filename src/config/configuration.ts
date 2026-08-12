@@ -18,6 +18,13 @@ export interface AppConfig {
   readonly backendCorsOrigins: string[];
   readonly cacheEnabled: boolean;
   /**
+   * Servidores DNS a usar en vez de los del sistema. Vacío = los del sistema,
+   * que es lo correcto en Docker y en producción. Solo se rellena en máquinas
+   * donde Node hereda mal la configuración DNS de Windows y no puede resolver
+   * el registro SRV de `mongodb+srv://`. Ver README.
+   */
+  readonly dnsServers: string[];
+  /**
    * Los nombres de colección son configurables porque no coinciden entre los dos
    * proveedores y estaban incrustados en el código. La versión FastAPI asumía
    * `sities_clean` en las dos bases, pero la de Google la llama `sities`: por eso
@@ -57,6 +64,31 @@ function parseCorsOrigins(raw: string): string[] {
     .filter(Boolean);
 }
 
+/**
+ * dns.setServers() lanza si recibe algo que no sea una IP, y lo haría en mitad
+ * del arranque del módulo de base de datos. Se valida aquí para que el error
+ * salga junto al resto de la configuración y diga cuál es el valor malo.
+ */
+function parseDnsServers(raw: string | undefined): string[] {
+  if (!raw?.trim()) {
+    return [];
+  }
+  const servers = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  // Acepta IPv4, IPv6 y el sufijo de puerto que admite setServers ("1.2.3.4:53",
+  // "[::1]:53"), pero no nombres de host: resolverlos requeriría el DNS que
+  // justamente no funciona.
+  const invalid = servers.filter((s) => !/^[0-9a-fA-F:.[\]]+$/.test(s));
+  if (invalid.length > 0) {
+    throw new Error(
+      `DNS_SERVERS solo acepta direcciones IP, no nombres de host: ${invalid.join(', ')}`,
+    );
+  }
+  return servers;
+}
+
 export function loadConfiguration(): AppConfig {
   const missing = REQUIRED.filter((key) => !process.env[key]);
   if (missing.length > 0) {
@@ -88,6 +120,7 @@ export function loadConfiguration(): AppConfig {
     // Permite apagar el caché sin tocar Redis. Necesario al comparar respuestas
     // contra FastAPI: con caché de por medio el diff no es fiable.
     cacheEnabled: process.env.CACHE_ENABLED !== 'false',
+    dnsServers: parseDnsServers(process.env.DNS_SERVERS),
     foursquareCollections: {
       clean: process.env.FOURSQUARE_COLLECTION_CLEAN ?? 'sities_clean',
       // No existe en el cluster; ningún endpoint la usa hoy.
