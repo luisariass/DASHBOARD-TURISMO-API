@@ -11,13 +11,8 @@ import { HttpCacheInterceptor } from './http-cache.interceptor';
 import { REDIS_CLIENT } from './cache.constants';
 
 /**
- * Redis es opcional, igual que en app/core/cache.py: si no está disponible la
- * API sirve igual, solo sin caché. El provider resuelve a null en ese caso y el
- * interceptor lo trata como "sin caché".
- *
- * A diferencia de la versión Python, el cliente es asíncrono. Allí se usaba el
- * paquete `redis` sincrónico dentro de funciones async, lo que bloqueaba el
- * event loop en cada get y cada setex.
+ * Módulo de caché con Redis.
+ * Si Redis no está disponible o CACHE_ENABLED=false, la aplicación continúa funcionando sin caché.
  */
 @Global()
 @Module({
@@ -41,8 +36,7 @@ import { REDIS_CLIENT } from './cache.constants';
           retryStrategy: () => null,
         });
 
-        // Sin este handler, un fallo de conexión posterior al arranque tumbaría
-        // el proceso con un error no capturado.
+        // Sin este handler, un fallo de conexión posterior al arranque tumbaría el proceso.
         client.on('error', () => undefined);
 
         try {
@@ -66,7 +60,6 @@ export class CacheModule implements OnApplicationShutdown {
 
   constructor(@Inject(REDIS_CLIENT) private readonly client: Redis | null) {}
 
-  /** Equivalente al close_redis() del lifespan de FastAPI. */
   async onApplicationShutdown(): Promise<void> {
     if (this.client) {
       await this.client.quit();

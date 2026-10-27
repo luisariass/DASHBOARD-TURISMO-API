@@ -2,9 +2,7 @@ import { buildCacheKey } from './cache-key';
 
 describe('buildCacheKey', () => {
   it('genera claves distintas para departamentos distintos', () => {
-    // Este es exactamente el bug de la versión FastAPI: con la clave derivada
-    // solo de **kwargs, estas dos peticiones colisionaban y la segunda devolvía
-    // los datos de la primera durante todo el TTL.
+    // Asegura que peticiones con departamentos distintos generen claves distintas y no colisionen.
     const bolivar = buildCacheKey('/foursquare/sities', {
       departamento: 'Bolívar',
       limit: 100,

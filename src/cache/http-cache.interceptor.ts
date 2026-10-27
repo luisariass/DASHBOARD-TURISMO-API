@@ -15,11 +15,8 @@ import { CACHE_TTL_KEY } from './cache-ttl.decorator';
 import { buildCacheKey } from './cache-key';
 
 /**
- * Caché en la frontera HTTP. En FastAPI el decorador @cached envolvía las
- * funciones de consulta, lo que acoplaba el caché a la capa de persistencia y
- * fue justo el origen del bug de la clave. Aquí el interceptor solo ve la
- * petición y la respuesta, así que la clave se deriva de la ruta y de la query
- * completa, que es la única entrada real del endpoint.
+ * Interceptor de caché en la frontera HTTP.
+ * La clave de caché se deriva de la ruta y de la query completa normalizada.
  */
 @Injectable()
 export class HttpCacheInterceptor implements NestInterceptor {
