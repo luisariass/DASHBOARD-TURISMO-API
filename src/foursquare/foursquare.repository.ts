@@ -6,9 +6,7 @@ import { insensitiveRegex } from '../shared/mongo.util';
 import { APP_CONFIG, AppConfig } from '../config/configuration';
 
 /**
- * Traducción de app/services/foursquare.py. Los pipelines de agregación son los
- * mismos documento por documento: en Mongo son JSON, así que pasan de Python a
- * TypeScript sin reinterpretarse.
+ * Repositorio de acceso a datos para las colecciones de Foursquare en MongoDB.
  */
 @Injectable()
 export class FoursquareRepository extends BaseSitesRepository {
@@ -37,26 +35,23 @@ export class FoursquareRepository extends BaseSitesRepository {
     full = false,
   ): Promise<number> {
     const collection = full ? 'reviewers_full' : 'reviewers';
-    return this.db.collection(collection).countDocuments({ departamento });
+    return this.db
+      .collection(collection)
+      .countDocuments({ departamento });
   }
 
-  /**
-   * Expande el array de tips con $unwind y proyecta el objeto completo como
-   * `tip`. El $project excluye _id, por eso los tips no llevan identificador en
-   * la respuesta.
-   */
   async findExpandedTipsByDepartment(
     departamento: string,
     limit: number,
   ): Promise<Document[]> {
     return this.db
+      //.collection('reviewers')
       .collection('tips')
       .aggregate([
         { $match: { departamento: insensitiveRegex(departamento) } },
         { $unwind: '$tips' },
         {
           $project: {
-            _id: 0,
             user_name: 1,
             municipio: 1,
             departamento: 1,
@@ -68,13 +63,9 @@ export class FoursquareRepository extends BaseSitesRepository {
       .toArray();
   }
 
-  /**
-   * Cuenta los tips después de expandir el array, así que el total es de tips y
-   * no de documentos. Deuda ya anotada: recorre y expande toda la colección solo
-   * para contar.
-   */
   async countExpandedTipsByDepartment(departamento: string): Promise<number> {
     const result = await this.db
+      //.collection('reviewers')
       .collection('tips')
       .aggregate([
         { $match: { departamento: insensitiveRegex(departamento) } },
@@ -86,7 +77,7 @@ export class FoursquareRepository extends BaseSitesRepository {
     return result.length > 0 ? (result[0].total_tips as number) : 0;
   }
 
-  /** Municipios de un departamento concreto, con el mismo pipeline que Python. */
+  /** Municipios de un departamento concreto. */
   async findMunicipalitiesByDepartment(
     departamento: string,
   ): Promise<string[]> {

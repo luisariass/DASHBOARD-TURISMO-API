@@ -13,9 +13,7 @@ import {
 } from './dto/foursquare-response.dto';
 
 /**
- * Los mappers hacen explícito el filtrado que en FastAPI hacía el response_model
- * de forma implícita: solo salen los campos declarados, y los ausentes salen
- * como null en vez de omitirse.
+ * Mappers para normalizar las respuestas de Foursquare según el contrato de la API.
  */
 
 export function toSiteFoursquare(doc: Document): SiteFoursquareDto {
@@ -43,9 +41,6 @@ export function toReviewer(doc: Document): ReviewerDto {
 
 function toTipDetails(tip: Document): TipDetailsDto {
   return {
-    // tip_id es obligatorio en el modelo de Pydantic; si faltara, allí la
-    // respuesta fallaba con un error de validación. Aquí se emite vacío para no
-    // tumbar todo el listado por un documento mal formado.
     tip_id: toStringId(tip?.tip_id),
     site_id: toStringOrNull(tip?.site_id),
     date: toStringOrNull(tip?.date),
@@ -65,11 +60,6 @@ export function toExpandedTip(doc: Document): ExpandedTipDto {
   };
 }
 
-/**
- * El pipeline del heatmap ya proyecta solo latitude y longitude, así que aquí
- * no hay filtrado que hacer. El campo weight sigue comentado en el modelo
- * original y se deja fuera.
- */
 export function toHeatmapPoint(doc: Document): HeatmapPointDto {
   return {
     latitude: toNumberOrNull(doc.latitude),

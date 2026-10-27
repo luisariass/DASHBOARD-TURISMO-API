@@ -19,12 +19,8 @@ import {
 } from './dto/foursquare-response.dto';
 
 /**
- * Equivale a app/api/routers/foursquare.py. Las rutas se mantienen idénticas,
- * incluido el typo `sities`: forma parte del contrato con el frontend y
- * cambiarlo es una decisión aparte, no un efecto colateral de la migración.
- *
- * Los TTL son los mismos que tenían los decoradores @cached de la versión
- * Python: 600 segundos en los listados y 900 en el heatmap.
+ * Controlador de endpoints para los datos de Foursquare.
+ * Las rutas preservan los nombres esperados por el frontend (ej. 'sities').
  */
 @ApiTags('Foursquare')
 @Controller('foursquare')

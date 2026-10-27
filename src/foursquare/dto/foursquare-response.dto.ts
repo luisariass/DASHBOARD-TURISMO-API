@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-/** Equivale a SiteFoursquare de app/models/schemas.py. */
 export class SiteFoursquareDto {
   @ApiProperty({ name: '_id' })
   _id!: string;
@@ -27,7 +26,6 @@ export class SiteFoursquareDto {
   rating!: number | null;
 }
 
-/** Equivale a Reviewer. La clave del listado es "reseñantes", con ñ. */
 export class ReviewerDto {
   @ApiProperty({ name: '_id' })
   _id!: string;
@@ -45,7 +43,6 @@ export class ReviewerDto {
   departamento!: string | null;
 }
 
-/** Equivale a TipDetails: el objeto anidado dentro de cada tip expandido. */
 export class TipDetailsDto {
   @ApiProperty()
   tip_id!: string;
@@ -69,7 +66,6 @@ export class TipDetailsDto {
   score!: number | null;
 }
 
-/** Equivale a ExpandedTip. No lleva _id: el pipeline lo excluye. */
 export class ExpandedTipDto {
   @ApiProperty({ nullable: true })
   user_name!: string | null;
