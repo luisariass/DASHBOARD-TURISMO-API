@@ -1,17 +1,30 @@
-# Etapa 1: Usar una imagen oficial de Python
-FROM python:3.11-slim
+# Imagen de producción de la API en NestJS.
 
-# Etapa 2: Configurar el directorio de trabajo dentro del contenedor
+# --- Etapa de construcción ---
+FROM node:20-alpine AS build
 WORKDIR /app
 
-# Etapa 3: Instalar dependencias
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Corepack instala la versión de pnpm fijada en el campo packageManager de package.json
+RUN npm install -g corepack@latest && corepack enable pnpm
 
-# Etapa 4: Copiar el código de la aplicación
-# CORRECCIÓN: Copiamos solo la carpeta 'app' que contiene nuestro código
-COPY ./app ./app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
-# Etapa 5: Comando para ejecutar la API en producción
-# Uvicorn se ejecutará en el host 0.0.0.0 para ser accesible desde fuera del contenedor
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+COPY tsconfig.json nest-cli.json ./
+COPY src ./src
+RUN pnpm build
+
+# Dependencias de producción
+RUN pnpm install --frozen-lockfile --prod --config.node-linker=hoisted
+
+# --- Etapa de producción ---
+FROM node:20-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY package.json ./
+
+EXPOSE 8000
+CMD ["node", "dist/main"]

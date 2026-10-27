@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/nest]
   pull_request:
 
 jobs:
@@ -11,28 +11,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: pnpm/action-setup@v3
         with:
-          python-version: '3.11'
-          cache: pip
+          version: 9
 
-      - run: pip install -r requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
 
-      # Verifica que la app se importa y registra sus rutas. Las settings son
-      # obligatorias, así que se inyectan valores de relleno: no se conecta a
-      # Mongo ni a Redis en tiempo de import.
-      - name: Verificar que la app arranca
-        env:
-          MONGODB_URI: mongodb://localhost:27017
-          MONGODB_DATABASE_FOURSQUARE: test_fsq
-          MONGODB_DATABASE_GOOGLE: test_google
-          REDIS_URL: redis://localhost:6379
-          BACKEND_CORS_ORIGINS: '["http://localhost:5173"]'
-        run: python -c "from app.main import app; assert app.routes; print(len(app.routes), 'rutas')"
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Validar tipos
+        run: pnpm run lint
+
+      - name: Ejecutar tests
+        run: pnpm test
+
+      - name: Compilar
+        run: pnpm run build
 
       - name: Validar docker-compose
-        # env_file debe existir para que compose parsee; los valores son
-        # irrelevantes porque no se levanta ningún servicio.
         run: |
           cp .env.example .env
           docker compose config --quiet

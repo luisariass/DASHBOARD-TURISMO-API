@@ -2,39 +2,16 @@ services:
   api:
     build:
       context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     env_file:
       - ./.env
     environment:
-      # Dentro de la red de Compose, Redis no está en localhost sino en el
-      # host 'redis'. Esto sobreescribe el REDIS_URL del .env, que apunta a
-      # localhost para cuando ejecutas uvicorn directamente en tu máquina.
+      # Dentro de la red de Compose, Redis se accede a través del host 'redis'.
       REDIS_URL: redis://redis:6379
-    volumes:
-      # Live-reload no está activo (el CMD de producción no usa --reload),
-      # pero el montaje evita reconstruir la imagen en cada cambio.
-      - ./app:/app/app
-    depends_on:
-      - redis
-
-  # API en NestJS, en paralelo a FastAPI mientras dure la migración. Es la que
-  # se compara con `npm run compare`. Cuando la paridad esté completa, este
-  # servicio pasa a llamarse 'api' en el puerto 8000 y el otro desaparece.
-  api-nest:
-    build:
-      context: .
-      dockerfile: Dockerfile.nest
-    ports:
-      - "8001:8001"
-    env_file:
-      - ./.env
-    environment:
-      REDIS_URL: redis://redis:6379
-      PORT: 8001
-      # Sin caché por defecto: es la condición para que la comparación contra
-      # FastAPI sea fiable. Ponlo en true para probar el caché a propósito.
-      CACHE_ENABLED: "false"
+      PORT: 8000
+      CACHE_ENABLED: "true"
     depends_on:
       - redis
 

@@ -10,8 +10,7 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
     "lint": "tsc --noEmit -p tsconfig.json",
-    "test": "jest",
-    "compare": "node scripts/compare.mjs"
+    "test": "jest"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",

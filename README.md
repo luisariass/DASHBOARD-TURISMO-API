@@ -1,37 +1,43 @@
-# Dashboard Turismo — API
+# Dashboard Turismo — API (NestJS)
 
 API de consulta para el dashboard de turismo del Caribe colombiano. Expone
 datos de sitios, reseñantes y tips recolectados de Foursquare y Google,
 almacenados en MongoDB Atlas, con caché en Redis.
 
-Actualmente en **FastAPI**; en migración a **NestJS** (ver [Migración](#migración-a-nestjs)).
+Construida con **NestJS** y **TypeScript**.
 
-El frontend vive en un repo aparte:
+El frontend vive en un repositorio aparte:
 [DASHBOARD-TURISMO-WEB](https://github.com/luisariass/DASHBOARD-TURISMO-WEB).
 
 ## Requisitos
 
-- Python 3.11+
-- Acceso a un cluster de MongoDB Atlas
-- Redis (opcional en local: si no está disponible la API funciona sin caché)
+- Node.js 20+
+- [pnpm](https://pnpm.io/) (o npm / yarn)
+- Acceso a un clúster de MongoDB Atlas
+- Redis (opcional en local: si no está disponible, la API funciona sin caché o configurando `CACHE_ENABLED=false`)
 
 ## Arranque local
 
 ```bash
-python -m venv venv
-source venv/Scripts/activate      # en Linux/macOS: source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env              # y rellena los valores
-uvicorn app.main:app --reload
+# 1. Instalar dependencias
+pnpm install
+
+# 2. Configurar variables de entorno
+cp .env.example .env     # y completa los valores si no existen
+
+# 3. Iniciar en modo desarrollo
+pnpm run start:dev
 ```
 
-Disponible en `http://localhost:8000`. Documentación interactiva en
-`http://localhost:8000/docs`.
+Disponible en `http://localhost:8000`.
+
+- **Documentación interactiva (Swagger UI):** `http://localhost:8000/docs`
+- **Esquema OpenAPI en JSON:** `http://localhost:8000/api/v1/openapi.json`
 
 ## Arranque con Docker
 
-La red `dashboard_net` es compartida con el repo web, así que su Nginx puede
-hacer proxy a este servicio. Se crea una sola vez:
+La red `dashboard_net` es compartida con el frontend, de modo que su Nginx puede
+hacer proxy a `http://api:8000`. Se crea una sola vez:
 
 ```bash
 docker network create dashboard_net
@@ -40,13 +46,20 @@ docker compose up --build
 
 ## Variables de entorno
 
-Ver [`.env.example`](.env.example). `MONGODB_URI`, las dos `MONGODB_DATABASE_*`,
-`REDIS_URL` y `BACKEND_CORS_ORIGINS` son obligatorias: la API no arranca si
-falta alguna (las valida Pydantic al iniciar).
+Consulta [`.env.example`](.env.example). Las variables principales son:
+
+- `MONGODB_URI`: Cadena de conexión al clúster de MongoDB Atlas.
+- `MONGODB_DATABASE_FOURSQUARE`: Nombre de la base de datos de Foursquare.
+- `MONGODB_DATABASE_GOOGLE`: Nombre de la base de datos de Google.
+- `REDIS_URL`: URL del servidor Redis (ej. `redis://localhost:6379`).
+- `BACKEND_CORS_ORIGINS`: Lista JSON o separada por comas de orígenes permitidos.
+- `PORT`: Puerto en el que escucha la API (por defecto: `8000`).
+- `CACHE_ENABLED`: Activa (`true`) o desactiva (`false`) el interceptor de caché.
+- `DNS_SERVERS`: Opcional. Útil en Windows si Node no resuelve el registro SRV (`8.8.8.8,1.1.1.1`).
 
 ## Endpoints
 
-Prefijo `/foursquare`:
+### Prefijo `/foursquare`
 
 | Ruta | Query | Respuesta |
 |---|---|---|
@@ -57,7 +70,7 @@ Prefijo `/foursquare`:
 | `GET /municipios` | `departamento` (opc.) | `{ total, nombres[] }` |
 | `GET /heatmap` | `departamento` (req.), `municipio` (opc.) | `{ total, points[] }` |
 
-Prefijo `/google`:
+### Prefijo `/google`
 
 | Ruta | Query | Respuesta |
 |---|---|---|
@@ -66,88 +79,27 @@ Prefijo `/google`:
 | `GET /categorias` | — | `{ total, nombres[] }` |
 | `GET /municipios` | — | `{ total, nombres[] }` |
 
-Las claves de respuesta son parte del contrato con el frontend y deben
-preservarse literalmente, incluido `_id` y `reseñantes`.
+Las claves de respuesta son parte del contrato con el frontend y se preservan
+literalmente, incluyendo `_id` y `reseñantes`.
 
-## Estructura
-
-```
-app/
-├─ main.py              # arranque, CORS, registro de routers
-├─ core/
-│  ├─ config.py         # settings validadas con Pydantic
-│  ├─ database.py       # cliente Mongo y las dos bases de datos
-│  └─ cache.py          # decorador de caché sobre Redis
-├─ models/schemas.py    # modelos de request y response
-├─ api/routers/         # capa HTTP
-└─ services/            # consultas y pipelines de agregación
-```
-
-## Deuda conocida
-
-- **El caché devuelve datos cruzados entre departamentos.**
-  `core/cache.py:_generate_cache_key` construye la clave solo a partir de
-  `**kwargs`, pero los routers llaman a los services con argumentos
-  posicionales, así que `departamento` no entra en la clave. Durante el TTL,
-  consultar un departamento devuelve los datos del anterior. En
-  `get_heatmap_points` todos los parámetros son posicionales y comparten una
-  única entrada. Se corrige en la migración a Nest, derivando la clave del DTO
-  completo.
-- `core/cache.py` usa el cliente **sincrónico** de `redis` dentro de funciones
-  `async`, bloqueando el event loop en cada operación de caché.
-
-## Migración a NestJS
-
-En curso en la rama `feat/nest`. Los 10 endpoints están implementados y
-verificados contra FastAPI: 46 respuestas idénticas y 9 distintas, y las 9 son el
-arreglo del bug de Google. El detalle está en
-[`docs/PARIDAD.md`](docs/PARIDAD.md).
-
-Las dos versiones conviven mientras dure la migración: FastAPI en el 8000 y Nest
-en el 8001.
-
-```bash
-npm install
-npm run start:dev                      # Nest en el 8001
-npm run build && npm run start:prod
-npm test                               # tests de la clave de caché
-npm run compare                        # compara las dos APIs endpoint por endpoint
-```
-
-Con Docker, el servicio `api-nest` del `docker-compose.yml` levanta esta versión
-en el 8001 en paralelo a `api`.
-
-Decisiones de arquitectura aplicadas:
-
-- **Driver nativo `mongodb`, no Mongoose.** Los datos son scrapeados y sin
-  esquema fijo, todas las lecturas son agregaciones o `find` con projection y no
-  hay escrituras; los schemas de Mongoose descartarían campos desconocidos.
-- **Módulos verticales por feature** (`foursquare/`, `google/`, `shared/`), con
-  una base de repositorio compartida que recibe las colecciones por
-  configuración. Añadir un proveedor es añadir una carpeta.
-- **Frontera de repositorio delgada:** los services reciben un repositorio con
-  métodos en términos del dominio, no un handle de `Db`. Es lo que hace que se
-  puedan probar sin levantar Mongo.
-- **Caché en la frontera HTTP**, con la clave derivada de la ruta y la query
-  completa. Corrige el bug descrito arriba.
-- **Sin lógica de dominio inventada:** no hay capa de entidades ni puertos y
-  adaptadores, porque no hay reglas de negocio que aislar.
-
-Estructura:
+## Estructura del proyecto
 
 ```
 src/
-├─ main.ts                 # arranque, CORS, ValidationPipe, Swagger
-├─ app.module.ts
-├─ config/                 # settings validadas al arrancar
-├─ database/               # un MongoClient, dos providers de Db
-├─ cache/                  # Redis, interceptor y clave de caché
-├─ shared/                 # DTOs de query, mappers y base de repositorios
-├─ foursquare/             # controller, service, repository, DTOs
-└─ google/
+├─ main.ts                 # Arranque, CORS, ValidationPipe y configuración de Swagger
+├─ app.module.ts           # Módulo principal
+├─ config/                 # Configuración central y validación de variables de entorno
+├─ database/               # Conexión nativa con MongoClient y providers de Db
+├─ cache/                  # Conexión asíncrona con ioredis, interceptor y claves de caché
+├─ shared/                 # DTOs comunes, mappers y utilidades de MongoDB
+├─ foursquare/             # Controller, service, repository y DTOs de Foursquare
+└─ google/                 # Controller, service, repository y DTOs de Google
 ```
 
-El `openapi.json` queda en `/api/v1/openapi.json` y la documentación
-interactiva en `/docs`. Ese esquema es el que después consumirá
-`openapi-typescript` para generar los tipos del frontend, en vez de mantenerlos
-a mano.
+## Scripts disponibles
+
+- `pnpm run start:dev`: Arranca la API en modo watch (recarga automática).
+- `pnpm run build`: Compila el proyecto TypeScript en la carpeta `dist/`.
+- `pnpm run start:prod`: Ejecuta la versión compilada en producción.
+- `pnpm run lint`: Valida tipos de TypeScript con `tsc`.
+- `pnpm test`: Ejecuta las pruebas unitarias con Jest.
