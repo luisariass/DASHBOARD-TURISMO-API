@@ -5,12 +5,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { APP_CONFIG, AppConfig } from './config/configuration';
 
-/**
- * Equivale a app/main.py. El lifespan de FastAPI no tiene traducción directa
- * porque en Nest cada módulo gestiona su propio ciclo de vida: DatabaseModule y
- * CacheModule cierran sus conexiones en onApplicationShutdown, y para que esos
- * hooks se ejecuten hace falta enableShutdownHooks().
- */
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const config = app.get<AppConfig>(APP_CONFIG);
@@ -18,12 +12,8 @@ async function bootstrap(): Promise<void> {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
-      // Descarta parámetros no declarados en el DTO en vez de pasarlos al
-      // handler, igual que FastAPI ignora los query params que no declara.
       whitelist: true,
       transformOptions: { enableImplicitConversion: false },
-      // FastAPI responde 422 a un parámetro inválido; Nest usa 400 por defecto.
-      // Se alinea para no cambiar el contrato de errores.
       errorHttpStatusCode: 422,
     }),
   );
@@ -35,8 +25,6 @@ async function bootstrap(): Promise<void> {
     allowedHeaders: '*',
   });
 
-  // El openapi.json es lo que después consumirá openapi-typescript para generar
-  // los tipos del frontend, en vez de mantenerlos a mano.
   const document = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()

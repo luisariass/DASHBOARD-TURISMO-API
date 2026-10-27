@@ -2,10 +2,6 @@ import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
 
-/**
- * Reemplazan a los Query(...) de FastAPI. Las restricciones son las mismas:
- * departamento con min_length=2 y limit con le=1000.
- */
 export class DepartamentoQueryDto {
   @ApiProperty({ minLength: 2, example: 'Bolívar' })
   @IsString()

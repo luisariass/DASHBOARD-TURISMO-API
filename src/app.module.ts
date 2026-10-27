@@ -6,7 +6,6 @@ import { CacheModule } from './cache/cache.module';
 import { FoursquareModule } from './foursquare/foursquare.module';
 import { GoogleModule } from './google/google.module';
 
-/** Mismo mensaje que la raíz de la versión FastAPI. */
 @ApiExcludeController()
 @Controller()
 class RootController {
