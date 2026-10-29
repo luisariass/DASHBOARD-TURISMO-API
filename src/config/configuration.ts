@@ -111,11 +111,13 @@ export function loadConfiguration(): AppConfig {
     cacheEnabled: process.env.CACHE_ENABLED !== 'false',
     dnsServers: parseDnsServers(process.env.DNS_SERVERS),
     foursquareCollections: {
+      //coleccion de siitos de foursquare con categorias normalizadas predichas
       clean: process.env.FOURSQUARE_COLLECTION_CLEAN ?? 'sities_clean',
       full: process.env.FOURSQUARE_COLLECTION_FULL ?? 'sities_full',
     },
     googleCollections: {
-      clean: process.env.GOOGLE_COLLECTION_CLEAN ?? 'sities',
+      //coleccion de sitios de google maps con mas datos
+      clean: process.env.GOOGLE_COLLECTION_CLEAN ?? 'sities_backup',
       full: process.env.GOOGLE_COLLECTION_FULL ?? 'sities_full',
     },
   };

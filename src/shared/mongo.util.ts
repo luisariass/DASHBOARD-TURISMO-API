@@ -18,7 +18,16 @@ export function nullable(value: unknown): unknown {
  * Convierte valores numéricos o texto numérico a number, o null si es inválido/ausente.
  */
 export function toNumberOrNull(value: unknown): number | null {
-  if (value === undefined || value === null || value === '') return null;
+  if (value === undefined || value === null) return null;
+  if (typeof value === 'string') {
+    const trimmed = value.trim().toLowerCase();
+    // Sanitiza 'N/A', 'null', 'none' o cadenas vacías
+    if (['', 'n/a', 'null', 'none', 'undefined'].includes(trimmed)) {
+      return null;
+    }
+    const parsed = Number(trimmed.replace(',', '.'));
+    return Number.isNaN(parsed) ? null : parsed;
+  }
   const parsed = Number(value);
   return Number.isNaN(parsed) ? null : parsed;
 }
