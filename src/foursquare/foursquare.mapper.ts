@@ -23,9 +23,7 @@ export function toSiteFoursquare(doc: Document): SiteFoursquareDto {
     municipio: toStringOrNull(doc.municipio),
     departamento: toStringOrNull(doc.departamento),
     categoria: toStringOrNull(doc.categoria),
-    latitude: toNumberOrNull(doc.latitude),
-    longitude: toNumberOrNull(doc.longitude),
-    rating: toNumberOrNull(doc.rating),
+    puntuacion: toNumberOrNull(doc.puntuacion ?? doc.rating),
   };
 }
 

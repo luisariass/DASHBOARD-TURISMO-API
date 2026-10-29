@@ -1,29 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SiteFoursquareDto {
-  @ApiProperty({ name: '_id' })
+  @ApiProperty({ type: String, example: '6918983c48c76a1f1f855a75' })
   _id!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true, example: 'Restaurante Bar El Muelle' })
   nombre!: string | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true, example: 'Cartagena De Indias' })
   municipio!: string | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true, example: 'Bolívar' })
   departamento!: string | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: String, nullable: true, example: 'Restaurantes' })
   categoria!: string | null;
-
-  @ApiProperty({ nullable: true })
-  latitude!: number | null;
-
-  @ApiProperty({ nullable: true })
-  longitude!: number | null;
-
-  @ApiProperty({ nullable: true })
-  rating!: number | null;
+  
+  @ApiProperty({ type: Number, nullable: true, example: 4.5 })
+  puntuacion!: number | null;
 }
 
 export class ReviewerDto {
@@ -80,6 +74,7 @@ export class ExpandedTipDto {
   tip!: TipDetailsDto;
 }
 
+/* Clase para listar los sitios */
 export class SiteListResponseDto {
   @ApiProperty()
   total!: number;
@@ -88,6 +83,7 @@ export class SiteListResponseDto {
   sitios!: SiteFoursquareDto[];
 }
 
+/* Clase para listar los reseñantes */
 export class ReviewerListResponseDto {
   @ApiProperty()
   total!: number;
@@ -96,6 +92,7 @@ export class ReviewerListResponseDto {
   reseñantes!: ReviewerDto[];
 }
 
+/* Clase para listar los comentarios */
 export class TipListResponseDto {
   @ApiProperty()
   total_tips!: number;
