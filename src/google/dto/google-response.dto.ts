@@ -1,10 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-/**
- * Equivale a SiteGoogle de app/models/schemas.py. La diferencia con el sitio de
- * Foursquare es el campo de puntuación: aquí es `puntuacion` y no `rating`, y no
- * hay coordenadas declaradas.
- */
 export class SiteGoogleDto {
   @ApiProperty({ name: '_id' })
   _id!: string;
@@ -25,14 +20,83 @@ export class SiteGoogleDto {
   puntuacion!: number | null;
 }
 
-/**
- * La clave del listado es `sitios`, igual que en Foursquare: el frontend usa el
- * mismo tipo SitesResponse para los dos proveedores.
- */
-export class GoogleListResponseDto {
+export class ReviewerDto {
+  @ApiProperty({ name: '_id' })
+  _id!: string;
+
+  @ApiProperty({ nullable: true })
+  id!: string | null;
+
+  @ApiProperty({ nullable: true })
+  user_name!: string | null;
+
+  @ApiProperty({ nullable: true })
+  municipio!: string | null;
+
+  @ApiProperty({ nullable: true })
+  departamento!: string | null;
+}
+
+export class TipDetailsDto {
+  @ApiProperty()
+  tip_id!: string;
+
+  @ApiProperty({ nullable: true })
+  site_id!: string | null;
+
+  @ApiProperty({ nullable: true })
+  date!: string | null;
+
+  @ApiProperty({ nullable: true })
+  reviewed_place!: string | null;
+
+  @ApiProperty({ nullable: true })
+  reviewed_category!: string | null;
+
+  @ApiProperty({ nullable: true })
+  comment!: string | null;
+
+  @ApiProperty({ nullable: true })
+  score!: number | null;
+}
+
+export class ExpandedTipDto {
+  @ApiProperty({ nullable: true })
+  user_name!: string | null;
+
+  @ApiProperty({ nullable: true })
+  municipio!: string | null;
+
+  @ApiProperty({ nullable: true })
+  departamento!: string | null;
+
+  @ApiProperty({ type: TipDetailsDto })
+  tip!: TipDetailsDto;
+}
+
+/* Clase para listar los sitios */
+export class SiteListResponseDto {
   @ApiProperty()
   total!: number;
 
   @ApiProperty({ type: [SiteGoogleDto] })
   sitios!: SiteGoogleDto[];
+}
+
+/* Clase para listar los reseñantes */
+export class ReviewerListResponseDto {
+  @ApiProperty()
+  total!: number;
+
+  @ApiProperty({ type: [ReviewerDto], name: 'reseñantes' })
+  reseñantes!: ReviewerDto[];
+}
+
+/* Clase para listar los comentarios */
+export class TipListResponseDto {
+  @ApiProperty()
+  total_tips!: number;
+
+  @ApiProperty({ type: [ExpandedTipDto] })
+  tips!: ExpandedTipDto[];
 }

@@ -3,18 +3,25 @@ import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { GoogleService } from './google.service';
 import { CacheTtl } from '../cache/cache-ttl.decorator';
 import { HttpCacheInterceptor } from '../cache/http-cache.interceptor';
-import { SitesQueryDto } from '../shared/dto/query.dto';
-import { NameListResponseDto } from '../shared/dto/response.dto';
-import { GoogleListResponseDto } from './dto/google-response.dto';
+import {
+  HeatmapQueryDto,
+  OptionalDepartamentoQueryDto,
+  SitesQueryDto,
+} from '../shared/dto/query.dto';
+import {
+  HeatmapResponseDto,
+  NameListResponseDto,
+} from '../shared/dto/response.dto';
+
+import {
+  ReviewerListResponseDto,
+  SiteListResponseDto,
+  TipListResponseDto,
+} from './dto/google-response.dto';
 
 /**
- * Equivale a app/api/routers/google.py, con las mismas rutas.
- *
- * Aquí sí hay un cambio de comportamiento deliberado: en la versión FastAPI este
- * módulo no tenía ningún caché, no por decisión sino porque el copy-paste desde
- * Foursquare se desincronizó. Ahora se cachea con los mismos TTL. Al comparar
- * respuestas con FastAPI hay que hacerlo con CACHE_ENABLED=false, que es la
- * recomendación general de todos modos.
+ * Controlador de endpoints para los datos de Google.
+ * Rutas declaradas con soporte para caché HTTP (600s de TTL).
  */
 @ApiTags('Google')
 @Controller('google')
@@ -22,20 +29,29 @@ import { GoogleListResponseDto } from './dto/google-response.dto';
 export class GoogleController {
   constructor(private readonly service: GoogleService) {}
 
-  @Get('sities_clean')
+  @Get('sities')
   @CacheTtl(600)
-  @ApiOkResponse({ type: GoogleListResponseDto })
-  readSitesClean(
-    @Query() query: SitesQueryDto,
-  ): Promise<GoogleListResponseDto> {
-    return this.service.getSites(query.departamento, query.limit, true);
+  @ApiOkResponse({ type: SiteListResponseDto })
+  readSitesClean(@Query() query: SitesQueryDto): Promise<SiteListResponseDto> {
+    return this.service.getSites(query.departamento, query.limit);
   }
 
-  @Get('sities_full')
+  @Get('reviewers')
   @CacheTtl(600)
-  @ApiOkResponse({ type: GoogleListResponseDto })
-  readSitesFull(@Query() query: SitesQueryDto): Promise<GoogleListResponseDto> {
-    return this.service.getSites(query.departamento, query.limit, false);
+  @ApiOkResponse({ type: ReviewerListResponseDto })
+  readReviewers(
+    @Query() query: SitesQueryDto,
+  ): Promise<ReviewerListResponseDto> {
+    return this.service.getReviewers(query.departamento, query.limit);
+  }
+
+  @Get('tips')
+  @CacheTtl(600)
+  @ApiOkResponse({ type: TipListResponseDto })
+  readExpandedTips(
+    @Query() query: SitesQueryDto,
+  ): Promise<TipListResponseDto> {
+    return this.service.getExpandedTips(query.departamento, query.limit);
   }
 
   @Get('categorias')
@@ -48,7 +64,18 @@ export class GoogleController {
   @Get('municipios')
   @CacheTtl(600)
   @ApiOkResponse({ type: NameListResponseDto })
-  readMunicipalities(): Promise<NameListResponseDto> {
-    return this.service.getMunicipalities();
+  readMunicipalities(
+    @Query() query: OptionalDepartamentoQueryDto,
+  ): Promise<NameListResponseDto> {
+    return this.service.getMunicipalities(query.departamento);
+  }
+
+  @Get('heatmap')
+  @CacheTtl(900)
+  @ApiOkResponse({ type: HeatmapResponseDto })
+  readHeatmapPoints(
+    @Query() query: HeatmapQueryDto,
+  ): Promise<HeatmapResponseDto> {
+    return this.service.getHeatmapPoints(query.departamento, query.municipio);
   }
 }
