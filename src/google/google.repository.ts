@@ -56,7 +56,7 @@ export class GoogleRepository extends BaseSitesRepository {
       .collection('Tips')
       .aggregate([
         { $match: { departamento: insensitiveRegex(departamento) } },
-        { $unwind: '$Tips' },
+        { $unwind: '$tips' },
         {
           $project: {
             user_name: 1,
@@ -76,7 +76,7 @@ export class GoogleRepository extends BaseSitesRepository {
       .collection('Tips')
       .aggregate([
         { $match: { departamento: insensitiveRegex(departamento) } },
-        { $unwind: '$Tips' },
+        { $unwind: '$tips' },
         { $count: 'total_tips' },
       ])
       .toArray();

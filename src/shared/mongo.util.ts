@@ -21,11 +21,11 @@ export function toNumberOrNull(value: unknown): number | null {
   if (value === undefined || value === null) return null;
   if (typeof value === 'string') {
     const trimmed = value.trim().toLowerCase();
-    // Sanitiza 'N/A', 'null', 'none' o cadenas vacías
     if (['', 'n/a', 'null', 'none', 'undefined'].includes(trimmed)) {
       return null;
     }
-    const parsed = Number(trimmed.replace(',', '.'));
+    // parseFloat extrae el número inicial aunque venga acompañado de texto (ej. "5 estrellas" -> 5)
+    const parsed = parseFloat(trimmed.replace(',', '.'));
     return Number.isNaN(parsed) ? null : parsed;
   }
   const parsed = Number(value);
