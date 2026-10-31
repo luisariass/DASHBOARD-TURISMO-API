@@ -1,5 +1,6 @@
-# Ningun paquete necesita ejecutar scripts de instalacion:
-# el postinstall de @nestjs/core solo imprime un aviso y @scarf/scarf es telemetria.
+packages:
+  - '.'
+
 allowBuilds:
   '@nestjs/core': false
   '@scarf/scarf': false
