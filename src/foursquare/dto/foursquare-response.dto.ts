@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SiteFoursquareDto {
-  @ApiProperty({ type: String, example: '6918983c48c76a1f1f855a75' })
-  _id!: string;
+  // ID del sitio dado por foursquare
+  @ApiProperty({ type: String, example: '53613714498ebeb694f2336a' })
+  id!: string; 
 
   @ApiProperty({ type: String, nullable: true, example: 'Restaurante Bar El Muelle' })
   nombre!: string | null;

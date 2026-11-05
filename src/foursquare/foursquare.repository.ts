@@ -45,7 +45,6 @@ export class FoursquareRepository extends BaseSitesRepository {
     limit: number,
   ): Promise<Document[]> {
     return this.db
-      //.collection('reviewers')
       .collection('tips')
       .aggregate([
         { $match: { departamento: insensitiveRegex(departamento) } },
@@ -65,7 +64,6 @@ export class FoursquareRepository extends BaseSitesRepository {
 
   async countExpandedTipsByDepartment(departamento: string): Promise<number> {
     const result = await this.db
-      //.collection('reviewers')
       .collection('tips')
       .aggregate([
         { $match: { departamento: insensitiveRegex(departamento) } },
@@ -99,8 +97,8 @@ export class FoursquareRepository extends BaseSitesRepository {
   }
 
   /**
-   * Puntos del mapa de calor. Descarta documentos sin coordenadas y proyecta
-   * solo latitude y longitude.
+   * Puntos del mapa de calor y marcadores de sitios.
+   * Proyecta coordenadas y metadata de los sitios turísticos.
    */
   async findHeatmapPoints(
     departamento: string,
@@ -119,7 +117,14 @@ export class FoursquareRepository extends BaseSitesRepository {
     return this.db
       .collection(this.collections.clean)
       .find(query)
-      .project({ latitude: 1, longitude: 1, _id: 0 })
+      .project({
+        latitude: 1,
+        longitude: 1,
+        nombre: 1,
+        categoria: 1,
+        puntuacion: 1,
+        _id: 1,
+      })
       .toArray();
   }
 }

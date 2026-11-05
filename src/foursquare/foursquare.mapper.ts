@@ -18,7 +18,7 @@ import {
 
 export function toSiteFoursquare(doc: Document): SiteFoursquareDto {
   return {
-    _id: toStringId(doc._id),
+    id: toStringId(doc.id),
     nombre: toStringOrNull(doc.nombre),
     municipio: toStringOrNull(doc.municipio),
     departamento: toStringOrNull(doc.departamento),
@@ -60,6 +60,10 @@ export function toExpandedTip(doc: Document): ExpandedTipDto {
 
 export function toHeatmapPoint(doc: Document): HeatmapPointDto {
   return {
+    _id: toStringId(doc._id),
+    nombre: toStringOrNull(doc.nombre),
+    categoria: toStringOrNull(doc.categoria),
+    puntuacion: toNumberOrNull(doc.puntuacion ?? doc.rating),
     latitude: toNumberOrNull(doc.latitude),
     longitude: toNumberOrNull(doc.longitude),
   };

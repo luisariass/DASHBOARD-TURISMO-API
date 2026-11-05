@@ -13,6 +13,18 @@ export class NameListResponseDto {
 }
 
 export class HeatmapPointDto {
+  @ApiProperty({ nullable: true })
+  _id?: string;
+
+  @ApiProperty({ nullable: true })
+  nombre?: string | null;
+
+  @ApiProperty({ nullable: true })
+  categoria?: string | null;
+
+  @ApiProperty({ nullable: true })
+  puntuacion?: number | null;
+
   @ApiProperty()
   latitude!: number | null;
 
